@@ -96,16 +96,18 @@ public class HttpConnectUtils {
         }
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("header = ");
-        Map<String,String> header = mParamsBuild.getHeader();
+        Map<String,Object> header = mParamsBuild.getHeader();
         for(String key:header.keySet()){
             stringBuilder.append("["+key+" = "+header.get(key) + "] ");
         }
         HttpLog.log().i(
             WRAP + "==================================================" +
+                WRAP + "|| action = " + "request" +
                 WRAP + "|| content_type = " + CONTENT_TYPE +
                 WRAP + "|| connect_type = " + CONNECT_TYPE +
                 WRAP + "|| connect_timeout = " + CONNECT_TIMEOUT +
                 WRAP + "|| read_timeout = " + READ_TIMEOUT +
+                WRAP + "|| max_retry_sum = " + MAX_RETRY_SUM +
                 WRAP + "|| "+stringBuilder.toString() +
                 WRAP + "|| url = " + mUrl +
                 WRAP + "|| params = " + json +
@@ -118,7 +120,12 @@ public class HttpConnectUtils {
      * 方法说明：开始连接服务器
      */
     public void startConnect(){
-        PollingStateMachine.getInstance().execute(this::transaction);
+        PollingStateMachine.getInstance().execute(new Runnable() {
+            @Override
+            public void run() {
+                transaction();
+            }
+        });
     }
 
 
@@ -127,6 +134,7 @@ public class HttpConnectUtils {
      */
     private void transaction() {
         int reTrySum = 0;
+        int code = 0;
         Exception exception = null;
         while(reTrySum < MAX_RETRY_SUM){
             try {
@@ -167,9 +175,9 @@ public class HttpConnectUtils {
                 // 配置请求Content-Type
                 urlConn.setRequestProperty("Content-Type", CONTENT_TYPE);
                 //添加header
-                Map<String,String> header = mParamsBuild.getHeader();
+                Map<String,Object> header = mParamsBuild.getHeader();
                 for(String key:header.keySet()){
-                    urlConn.setRequestProperty(key,header.get(key));
+                    urlConn.setRequestProperty(key, (String) header.get(key));
                 }
                 // 开始连接
                 urlConn.connect();
@@ -181,14 +189,19 @@ public class HttpConnectUtils {
                     dos.close();
                 }
                 //连接状态码
-                int code = urlConn.getResponseCode();
-                HttpLog.log().i("code = "+code);
+                code = urlConn.getResponseCode();
                 // 判断请求是否成功
                 switch (code) {
                     case 200:
                         // 获取返回的数据
                         String result = streamToString(urlConn.getInputStream());
-                        HttpLog.log().i("出参 = "+result);
+                        HttpLog.log().i(
+                                WRAP + "==================================================" +
+                                    WRAP + "|| action = " + "response" +
+                                    WRAP + "|| code = " + code +
+                                    WRAP + "|| 出参 = " + result +
+                                    WRAP + "==================================================" +
+                                    WRAP);
                         httpConnectCallback.onCompleted(result);
                         return;
                     case 404:
@@ -197,13 +210,17 @@ public class HttpConnectUtils {
                         httpConnectCallback.onException("connect exception: code = " + code);
                         return;
                     default:
-                        //重新尝试连接服务器
-                        reTrySum++;
-                        HttpLog.log().i("connect server exception: " + code + ", retry count: " +reTrySum);
-                        break;
+                        //如果设置了重试，则重新尝试连接服务器
+                        if (MAX_RETRY_SUM > 1){
+                            reTrySum++;
+                            exception = new Exception("connect server exception: code = " + code);
+                            HttpLog.log().i("connect server exception: code = " + code + ", retry count: " +reTrySum);
+                            continue;
+                        }else {
+                            httpConnectCallback.onException("connect server exception: code = " + code);
+                            return;
+                        }
                 }
-                // 关闭连接
-                urlConn.disconnect();
             } catch (MalformedURLException e) {
                 e.printStackTrace();
                 HttpLog.log().i("url create fail: "+e.toString());
@@ -211,8 +228,8 @@ public class HttpConnectUtils {
                 return;
             }catch (IOException e) {
                 e.printStackTrace();
-                exception = e;
                 reTrySum ++;
+                exception = e;
                 HttpLog.log().i("connect server exception: "+e.toString()+", retry count: "+reTrySum);
                 continue;
             }catch (Exception e){
@@ -220,12 +237,13 @@ public class HttpConnectUtils {
                 HttpLog.log().i("connect server exception: "+e.toString());
                 httpConnectCallback.onException("connect server exception: "+e.toString());
                 return;
+            }finally {
+                // 关闭连接
+                urlConn.disconnect();
             }
         }
-        //尝试多次连接服务器，仍然失败了
-        HttpLog.log().i("retry "+reTrySum+" count still connect server failed: "+exception);
         if(exception != null){
-            httpConnectCallback.onException("server unknown error: "+exception.toString());
+            httpConnectCallback.onException(exception.getMessage());
         }else{
             httpConnectCallback.onException("server unknown error: "+new Exception("unknown"));
         }

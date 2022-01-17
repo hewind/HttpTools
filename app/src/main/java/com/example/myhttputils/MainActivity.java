@@ -29,7 +29,7 @@ public class MainActivity extends Activity {
         content = findViewById(R.id.content);
 
         btn_http.setOnClickListener(view -> {
-            postTest2();
+            postTest();
         });
     }
 
@@ -41,16 +41,24 @@ public class MainActivity extends Activity {
         params.put("group_id","710");
         params.put("game_id","1394628137031");
         params.put("role_id","123");
-        params.put("role_name","ddd");
-        params.put("role_level","99");
+        params.put("role_name","roleName");
+        params.put("role_level",99);
         params.put("party_name","丐帮");
         params.put("balance","0");
-        params.put("vip_level","1");
-        params.put("role_create_time",System.currentTimeMillis()+"");
+        params.put("vip_level",99);
+        params.put("role_create_time","1642413612");
         params.put("client_type","1");
+
+        //新加字段
+        params.put("gameVersion","27");
+        params.put("gameUid","494001757633190");
+        params.put("cmbiChannelId", "2010041002");
+        params.put("deviceID","04:79:70:63:77:1A\u0002");
+        params.put("networkIP", "172.25.34.3");
         //添加header
         params.setHeader("Secret-Key","MUCVC-gdPpvhCtB.qKv8gaFi");
         HttpRequest httpRequest = new HttpRequest(this);
+        httpRequest.setIsRetry(true);
         httpRequest.sendRequest(params, "http://121.4.214.235:9528/services/app.tlbb-mobile/report/requests", new OnHttpRequestListener() {
             @Override
             public void onStart() {

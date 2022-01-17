@@ -20,10 +20,10 @@ public class HttpRequest implements OnHttpConnectCallback {
     public static final String CONNECT_TYPE_GET = "GET";
 
     private String connectType = "POST";//连接类型，默认post连接
+    private String contentType = "application/json";//数据提交格式类型，默认application/json;
+    private boolean is_retry = false;//部分类型连接失败是否尝试重试，默认不重试
     private int connectTimeout = 10*1000;
     private int readTimeOut = 10*1000;
-    private String contentType = "application/json";//数据提交格式类型，默认为application/json;
-    private boolean is_retry = false;//部分类型连接失败是否尝试重试，默认不重试
 
     private Context context;
 

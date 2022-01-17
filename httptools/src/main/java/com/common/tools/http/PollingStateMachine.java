@@ -17,7 +17,6 @@ public class PollingStateMachine {
     public static int corePoolSize = Runtime.getRuntime().availableProcessors() + 1;//线程数为Java虚拟机可用的处理器数+1
 
     public PollingStateMachine() {
-        HttpLog.log().i("corePoolSize = "+corePoolSize);
         pool = Executors.newFixedThreadPool(corePoolSize);
     }
 
