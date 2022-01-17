@@ -1,5 +1,7 @@
 package com.common.tools.http;
 
+import com.common.tools.http.utils.HttpLog;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -15,6 +17,7 @@ public class PollingStateMachine {
     public static int corePoolSize = Runtime.getRuntime().availableProcessors() + 1;//线程数为Java虚拟机可用的处理器数+1
 
     public PollingStateMachine() {
+        HttpLog.log().i("corePoolSize = "+corePoolSize);
         pool = Executors.newFixedThreadPool(corePoolSize);
     }
 

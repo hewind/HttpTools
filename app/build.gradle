@@ -4,12 +4,12 @@ plugins {
 
 android {
     compileSdkVersion 31
-    buildToolsVersion "31.0.0"
+    buildToolsVersion '31.0.0'
 
     defaultConfig {
         applicationId "com.example.myhttputils"
         minSdkVersion 21
-        targetSdkVersion 31
+        targetSdkVersion 26
         versionCode 1
         versionName "1.0"
 
@@ -29,4 +29,5 @@ android {
 
 dependencies {
     implementation project(path: ':httptools')
+    implementation 'androidx.appcompat:appcompat:1.4.0'
 }

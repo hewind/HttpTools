@@ -16,6 +16,7 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
+import java.util.Map;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -40,8 +41,11 @@ public class HttpConnectUtils {
     private final int READ_TIMEOUT;
     private final boolean IS_RETRY;//部分类型连接失败是否尝试重试
 
+    private HttpURLConnection urlConn;
+    private ParamsBuild mParamsBuild = null;
     private String json = "";
     private String mUrl;
+    private final String WRAP = "\n";//换行
 
     public HttpConnectUtils(ParamsBuild paramsBuild, String url, String connectType, String contenType, int connectTimeOut, int readTimeOut, boolean isRetry, OnHttpConnectCallback callback) {
         super();
@@ -52,45 +56,61 @@ public class HttpConnectUtils {
         this.READ_TIMEOUT = readTimeOut;
         this.httpConnectCallback = callback;
         this.IS_RETRY = isRetry;
-        preConnect(paramsBuild);
+        this.mParamsBuild = paramsBuild;
+        preConnect();
     }
 
     /**
      * 组装入参格式
-     * @param paramsBuild
      */
-    private void preConnect(ParamsBuild paramsBuild) {
+    private void preConnect() {
         //get请求
         if(CONNECT_TYPE.equals("GET")){
             //如果是get请求，参数也按照post的方式放入paramsbuild中统一拼接
-            if (paramsBuild != null && paramsBuild.size() > 0) {
+            if (mParamsBuild != null && mParamsBuild.size() > 0) {
                 String str = "";
-                for(String key:paramsBuild.keySet()){
-                    str += key + "=" + paramsBuild.get(key) + "&";
+                for(String key:mParamsBuild.keySet()){
+                    str += key + "=" + mParamsBuild.get(key) + "&";
                 }
                 str = str.substring(0,str.length()-1);
                 mUrl += "?" +str;
+                json = new JSONObject(mParamsBuild).toString();
             }
         }
         //post请求
         else if(CONNECT_TYPE.equals("POST")){
             //如果是form表单格式请求
             if(CONTENT_TYPE.equals("application/x-www-form-urlencoded")){
-                for(String key:paramsBuild.keySet()){
-                    json += key + "=" + paramsBuild.get(key) + "&";
+                for(String key:mParamsBuild.keySet()){
+                    json += key + "=" + mParamsBuild.get(key) + "&";
                 }
                 json = json.substring(0, json.length()-1);
             }
             //如果是json格式请求
             else if(CONTENT_TYPE.equals("application/json")){
-                json = new JSONObject(paramsBuild).toString();
+                json = new JSONObject(mParamsBuild).toString();
             }
         }
         if (!IS_RETRY){
             MAX_RETRY_SUM = 1;
         }
-        HttpLog.log().i("url = "+mUrl);
-        HttpLog.log().i("入参 = "+json);
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("header = ");
+        Map<String,String> header = mParamsBuild.getHeader();
+        for(String key:header.keySet()){
+            stringBuilder.append("["+key+" = "+header.get(key) + "] ");
+        }
+        HttpLog.log().i(
+            WRAP + "==================================================" +
+                WRAP + "|| content_type = " + CONTENT_TYPE +
+                WRAP + "|| connect_type = " + CONNECT_TYPE +
+                WRAP + "|| connect_timeout = " + CONNECT_TIMEOUT +
+                WRAP + "|| read_timeout = " + READ_TIMEOUT +
+                WRAP + "|| "+stringBuilder.toString() +
+                WRAP + "|| url = " + mUrl +
+                WRAP + "|| params = " + json +
+                WRAP + "==================================================" +
+                WRAP);
     }
 
 
@@ -110,31 +130,26 @@ public class HttpConnectUtils {
         Exception exception = null;
         while(reTrySum < MAX_RETRY_SUM){
             try {
-                SSLContext sslcontext = null;//第一个参数为协议,第二个参数为提供者(可以缺省)
-                HostnameVerifier ignoreHostnameVerifier = null;
-                SSLSocketFactory ssf = null;
-                try {
-                    sslcontext = SSLContext.getInstance("SSL", "SunJSSE");
-                    TrustManager[] tm = {new X509TrustManagerUtils()};
-                    sslcontext.init(null, tm, new SecureRandom());
-                    ignoreHostnameVerifier = new HostnameVerifier() {
-                        public boolean verify(String s, SSLSession sslsession) {
-                            System.out.println("WARNING: Hostname is not matched for cert.");
-                            return true;
-                        }
-                    };
-                } catch (NoSuchAlgorithmException | NoSuchProviderException | KeyManagementException e) {
-                    e.printStackTrace();
-                }
-                //https链接设置
-                HttpsURLConnection.setDefaultHostnameVerifier(ignoreHostnameVerifier);
-                assert sslcontext != null;
-                HttpsURLConnection.setDefaultSSLSocketFactory(sslcontext.getSocketFactory());
-
                 // 新建一个URL对象
                 URL url = new URL(mUrl);
-                // 打开一个HttpURLConnection连接
-                HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
+                //适配https接口
+                if (mUrl.startsWith("https")){
+                    //打开一个HttpsURLConnection连接
+                    urlConn = (HttpsURLConnection) url.openConnection();
+                    TrustManager[] trustAllCerts = new TrustManager[ 1 ];
+                    TrustManager tm = new X509TrustManagerUtils();
+                    trustAllCerts[ 0 ] = tm;
+                    SSLContext sc = SSLContext.getInstance( "SSL");
+                    sc.init( null, trustAllCerts, null );
+
+                    HttpsURLConnection https = ( HttpsURLConnection )urlConn;
+                    https.setSSLSocketFactory( sc.getSocketFactory() );
+                    https.setHostnameVerifier( ( HostnameVerifier )tm );
+                }else {
+                    //打开一个HttpURLConnection连接
+                    urlConn = (HttpURLConnection) url.openConnection();
+                }
+
                 // 设置连接超时时间
                 urlConn.setConnectTimeout(CONNECT_TIMEOUT);
                 //设置从主机读取数据超时
@@ -151,12 +166,17 @@ public class HttpConnectUtils {
                 urlConn.setInstanceFollowRedirects(true);
                 // 配置请求Content-Type
                 urlConn.setRequestProperty("Content-Type", CONTENT_TYPE);
+                //添加header
+                Map<String,String> header = mParamsBuild.getHeader();
+                for(String key:header.keySet()){
+                    urlConn.setRequestProperty(key,header.get(key));
+                }
                 // 开始连接
                 urlConn.connect();
                 // 发送请求参数，以下为POST方式写入数据，GET忽略
                 if(CONNECT_TYPE.equals("POST")){
                     DataOutputStream dos = new DataOutputStream(urlConn.getOutputStream());
-                    dos.write(json.toString().getBytes());
+                    dos.write(json.getBytes());
                     dos.flush();
                     dos.close();
                 }
@@ -186,6 +206,7 @@ public class HttpConnectUtils {
                 urlConn.disconnect();
             } catch (MalformedURLException e) {
                 e.printStackTrace();
+                HttpLog.log().i("url create fail: "+e.toString());
                 httpConnectCallback.onException("url create fail: "+e.toString());
                 return;
             }catch (IOException e) {
@@ -196,20 +217,19 @@ public class HttpConnectUtils {
                 continue;
             }catch (Exception e){
                 e.printStackTrace();
+                HttpLog.log().i("connect server exception: "+e.toString());
                 httpConnectCallback.onException("connect server exception: "+e.toString());
                 return;
             }
         }
         //尝试多次连接服务器，仍然失败了
+        HttpLog.log().i("retry "+reTrySum+" count still connect server failed: "+exception);
         if(exception != null){
-            HttpLog.log().i("retry "+reTrySum+" count still connect server failed: "+exception.toString());
             httpConnectCallback.onException("server unknown error: "+exception.toString());
         }else{
-            HttpLog.log().i("retry "+reTrySum+" count still connect server failed: server unknown error");
             httpConnectCallback.onException("server unknown error: "+new Exception("unknown"));
         }
     }
-
 
     /**
      * 方法说明：将输入流转换成字符串

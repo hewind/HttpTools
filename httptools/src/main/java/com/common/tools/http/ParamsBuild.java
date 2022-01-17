@@ -1,6 +1,9 @@
 package com.common.tools.http;
 
+import com.common.tools.http.utils.HttpLog;
+
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 作者：heshuiguang
@@ -9,9 +12,18 @@ import java.util.HashMap;
  */
 public class ParamsBuild extends HashMap<String,String>  {
 
+    private Map<String,String> header = new HashMap<>();
+
     public static ParamsBuild build(){
         ParamsBuild params = new ParamsBuild();
         return params;
+    }
+
+    public Map<String, String> getHeader() {
+        return header;
+    }
+    public void setHeader(String key,String value) {
+        this.header.put(key,value);
     }
 
 }

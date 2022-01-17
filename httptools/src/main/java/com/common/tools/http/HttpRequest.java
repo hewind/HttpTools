@@ -14,11 +14,16 @@ import com.common.tools.http.itl.OnHttpRequestListener;
  */
 public class HttpRequest implements OnHttpConnectCallback {
 
-    private String CONNECT_TYPE = "POST";//连接类型，默认post连接
-    private String CONTENT_TYPE = "application/json";//数据提交格式类型，默认为application/json;
-    private int CONNECT_TIMEOUT = 10*1000;
-    private int READ_TIMEOUT = 10*1000;
-    private boolean IS_RETRY = false;//部分类型连接失败是否尝试重试，默认不重试
+    public static final String CONTENT_TYPE_FORM = "application/x-www-form-urlencoded";
+    public static final String CONTENT_TYPE_JSON = "application/json";
+    public static final String CONNECT_TYPE_POST = "POST";
+    public static final String CONNECT_TYPE_GET = "GET";
+
+    private String connectType = "POST";//连接类型，默认post连接
+    private int connectTimeout = 10*1000;
+    private int readTimeOut = 10*1000;
+    private String contentType = "application/json";//数据提交格式类型，默认为application/json;
+    private boolean is_retry = false;//部分类型连接失败是否尝试重试，默认不重试
 
     private Context context;
 
@@ -35,10 +40,10 @@ public class HttpRequest implements OnHttpConnectCallback {
      * @return
      */
     public String getConnectType() {
-        return CONNECT_TYPE == null ? "POST" : CONNECT_TYPE;
+        return connectType == null ? "POST" : connectType;
     }
     public HttpRequest setConnectType(String connectType) {
-        this.CONNECT_TYPE = connectType;
+        this.connectType = connectType;
         return this;
     }
 
@@ -47,10 +52,10 @@ public class HttpRequest implements OnHttpConnectCallback {
      * @return
      */
     public String getContentType() {
-        return CONTENT_TYPE == null ? "application/json" : CONTENT_TYPE;
+        return contentType == null ? "application/json" : contentType;
     }
-    public HttpRequest setContentType(String contentType2) {
-        this.CONTENT_TYPE = contentType2;
+    public HttpRequest setContentType(String contentType) {
+        this.contentType = contentType;
         return this;
     }
 
@@ -59,10 +64,10 @@ public class HttpRequest implements OnHttpConnectCallback {
      * @return
      */
     public int getConnectTimeOut() {
-        return CONNECT_TIMEOUT;
+        return connectTimeout;
     }
     public HttpRequest setConnectTimeOut(int connectTimeOut) {
-        this.CONNECT_TIMEOUT = connectTimeOut;
+        this.connectTimeout = connectTimeOut;
         return this;
     }
 
@@ -71,10 +76,10 @@ public class HttpRequest implements OnHttpConnectCallback {
      * @return
      */
     public int getReadTimeOut() {
-        return READ_TIMEOUT;
+        return readTimeOut;
     }
     public void setReadTimeOut(int readTimeOut) {
-        this.READ_TIMEOUT = readTimeOut;
+        this.readTimeOut = readTimeOut;
     }
 
     /**
@@ -82,10 +87,10 @@ public class HttpRequest implements OnHttpConnectCallback {
      * @return
      */
     public boolean getIsRetry(){
-        return IS_RETRY;
+        return is_retry;
     }
     public HttpRequest setIsRetry(boolean isRetry){
-        this.IS_RETRY = isRetry;
+        this.is_retry = isRetry;
         return this;
     }
 

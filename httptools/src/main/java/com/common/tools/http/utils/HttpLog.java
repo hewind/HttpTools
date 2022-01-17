@@ -16,9 +16,6 @@ public class HttpLog {
     private final static int logLevel	= Log.VERBOSE;
     private static Hashtable<String, HttpLog> sLoggerTable = new Hashtable<String, HttpLog>();
     private static HttpLog klog;
-    private String	mClassName;
-
-    private static final String HSG = "hsg";//开发者
 
     private HttpLog(){
     }
@@ -54,7 +51,7 @@ public class HttpLog {
             if(st.getClassName().equals(this.getClass().getName())){
                 continue;
             }
-            return mClassName + "-[ " + Thread.currentThread().getName() + "; " + st.getFileName() + "; " + st.getLineNumber() + "-line; " + st.getMethodName() + " ]";
+            return "[ " + Thread.currentThread().getName() + "; " + st.getFileName() + "; " + st.getLineNumber() + "-line; " + st.getMethodName() + " ]";
         }
         return null;
     }
@@ -164,7 +161,7 @@ public class HttpLog {
     public void e(String log, Throwable tr){
         if(logFlag){
             String line = getFunctionName();
-            Log.e(tag, "{Thread:" + Thread.currentThread().getName() + "}" + "[" + mClassName + line + ":] " + log + "\n", tr);
+            Log.e(tag, "{Thread:" + Thread.currentThread().getName() + "}" + "[" + line + ":] " + log + "\n", tr);
         }
     }
     
