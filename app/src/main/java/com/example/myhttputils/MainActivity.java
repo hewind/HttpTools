@@ -59,7 +59,7 @@ public class MainActivity extends Activity {
         params.setHeader("Secret-Key","MUCVC-gdPpvhCtB.qKv8gaFi");
         HttpRequest httpRequest = new HttpRequest(this);
         httpRequest.setIsRetry(true);
-        httpRequest.sendRequest(params, "http://121.4.214.235:9528/services/app.tlbb-mobile/report/requests", new OnHttpRequestListener() {
+        httpRequest.sendRequest(params, "", new OnHttpRequestListener() {
             @Override
             public void onStart() {
                 HttpLog.log().i("onStart");
