@@ -96,9 +96,11 @@ public class HttpConnectUtils {
         }
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("header = ");
-        Map<String,Object> header = mParamsBuild.getHeader();
-        for(String key:header.keySet()){
-            stringBuilder.append("["+key+" = "+header.get(key) + "] ");
+        if (mParamsBuild != null && mParamsBuild.getHeader() != null && mParamsBuild.getHeader().size() > 0){
+            Map<String,Object> header = mParamsBuild.getHeader();
+            for(String key:header.keySet()){
+                stringBuilder.append("["+key+" = "+header.get(key) + "] ");
+            }
         }
         HttpLog.log().i(
             WRAP + "==================================================" +
@@ -134,7 +136,7 @@ public class HttpConnectUtils {
      */
     private void transaction() {
         int reTrySum = 0;
-        int code = 0;
+        int code;
         Exception exception = null;
         while(reTrySum < MAX_RETRY_SUM){
             try {
@@ -175,9 +177,11 @@ public class HttpConnectUtils {
                 // 配置请求Content-Type
                 urlConn.setRequestProperty("Content-Type", CONTENT_TYPE);
                 //添加header
-                Map<String,Object> header = mParamsBuild.getHeader();
-                for(String key:header.keySet()){
-                    urlConn.setRequestProperty(key, (String) header.get(key));
+                if (mParamsBuild != null && mParamsBuild.getHeader() != null && mParamsBuild.getHeader().size() > 0){
+                    Map<String,Object> header = mParamsBuild.getHeader();
+                    for(String key:header.keySet()){
+                        urlConn.setRequestProperty(key, (String) header.get(key));
+                    }
                 }
                 // 开始连接
                 urlConn.connect();
@@ -223,29 +227,38 @@ public class HttpConnectUtils {
                 }
             } catch (MalformedURLException e) {
                 e.printStackTrace();
-                HttpLog.log().i("url create fail: "+e.toString());
+                HttpLog.log().e("url create fail: "+e.toString());
                 httpConnectCallback.onException("url create fail: "+e.toString());
                 return;
             }catch (IOException e) {
                 e.printStackTrace();
                 reTrySum ++;
                 exception = e;
-                HttpLog.log().i("connect server exception: "+e.toString()+", retry count: "+reTrySum);
+                HttpLog.log().e("connect server exception: "+e.toString()+", retry count: "+reTrySum);
                 continue;
             }catch (Exception e){
                 e.printStackTrace();
-                HttpLog.log().i("connect server exception: "+e.toString());
+                HttpLog.log().e("connect server exception: "+e.toString());
                 httpConnectCallback.onException("connect server exception: "+e.toString());
                 return;
             }finally {
-                // 关闭连接
-                urlConn.disconnect();
+                try {
+                    // 关闭连接
+                    if (urlConn != null)
+                        urlConn.disconnect();
+                }catch (Exception e){
+                    HttpLog.log().e("connect server exception: "+e.toString());
+                }
             }
         }
-        if(exception != null){
-            httpConnectCallback.onException(exception.getMessage());
-        }else{
-            httpConnectCallback.onException("server unknown error: "+new Exception("unknown"));
+        if (httpConnectCallback != null){
+            if(exception != null){
+                httpConnectCallback.onException(exception.getMessage());
+            }else{
+                httpConnectCallback.onException("server unknown error: "+new Exception("unknown"));
+            }
+        }else {
+            HttpLog.log().e("httpConnectCallback is null");
         }
     }
 

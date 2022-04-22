@@ -14,3 +14,4 @@
 .idea/modules/
 .idea/vcs.xml
 local.properties
+/build/intermediates/lint-cache/api-versions-0-29.0.4.bin

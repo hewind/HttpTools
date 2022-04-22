@@ -14,10 +14,10 @@ import com.common.tools.http.itl.OnHttpRequestListener;
  */
 public class HttpRequest implements OnHttpConnectCallback {
 
-    public static final String CONTENT_TYPE_FORM = "application/x-www-form-urlencoded";
-    public static final String CONTENT_TYPE_JSON = "application/json";
-    public static final String CONNECT_TYPE_POST = "POST";
-    public static final String CONNECT_TYPE_GET = "GET";
+    public static final String FORM = "application/x-www-form-urlencoded";
+    public static final String JSON = "application/json";
+    public static final String POST = "POST";
+    public static final String GET = "GET";
 
     private String connectType = "POST";//连接类型，默认post连接
     private String contentType = "application/json";//数据提交格式类型，默认application/json;
