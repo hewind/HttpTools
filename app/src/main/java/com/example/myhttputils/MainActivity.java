@@ -3,7 +3,6 @@ package com.example.myhttputils;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -12,10 +11,12 @@ import com.common.tools.http.ParamsBuild;
 import com.common.tools.http.itl.OnHttpRequestListener;
 import com.common.tools.http.utils.HttpLog;
 
+
 public class MainActivity extends Activity {
 
     private Button btn_http;
     private TextView content;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,7 +30,7 @@ public class MainActivity extends Activity {
         content = findViewById(R.id.content);
 
         btn_http.setOnClickListener(view -> {
-            postTest();
+            postTest2();
         });
     }
 
@@ -38,7 +39,6 @@ public class MainActivity extends Activity {
      */
     private void postTest() {
         ParamsBuild params = ParamsBuild.build();
-        params.put("group_id","710");
         params.put("game_id","1394628137031");
         params.put("role_id","123");
         params.put("role_name","roleName");
@@ -58,8 +58,9 @@ public class MainActivity extends Activity {
         //添加header
         params.setHeader("Secret-Key","MUCVC-gdPpvhCtB.qKv8gaFi");
         HttpRequest httpRequest = new HttpRequest(this);
+        httpRequest.setConnectType(HttpRequest.GET);
         httpRequest.setIsRetry(true);
-        httpRequest.sendRequest(params, "", new OnHttpRequestListener() {
+        httpRequest.sendRequest(null, "url", new OnHttpRequestListener() {
             @Override
             public void onStart() {
                 HttpLog.log().i("onStart");
@@ -85,7 +86,7 @@ public class MainActivity extends Activity {
         params.setHeader("Authorization", "APPCODE " + appCode);
         //创建一个request
         HttpRequest httpRequest = new HttpRequest(this);
-        httpRequest.setConnectType(HttpRequest.CONNECT_TYPE_GET);
+        httpRequest.setConnectType(HttpRequest.GET);
         httpRequest.sendRequest(params, "http://api01.aliyun.venuscn.com/ip", new OnHttpRequestListener() {
             @Override
             public void onStart() {

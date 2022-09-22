@@ -4,13 +4,12 @@ plugins {
 
 android {
     compileSdkVersion 30
-    buildToolsVersion '30.0.3'
 
     defaultConfig {
         minSdkVersion 19
         targetSdkVersion 30
-        versionCode 2
-        versionName "1.1"
+        versionCode 110
+        versionName "v1.1.0"
     }
 
     buildTypes {
@@ -28,4 +27,16 @@ android {
 }
 
 dependencies {
+}
+
+task makeJar(type: Jar, dependsOn: ['compileReleaseJavaWithJavac']) {
+    destinationDir = file('jar/')
+    baseName = "httptools-" + android.defaultConfig.versionName // SDK名称
+    from('build/intermediates/javac/release/classes/')
+    exclude('**/BuildConfig.class')
+    exclude('**/BuildConfig\$*.class')
+    exclude('**/R.class')
+    exclude('**/R\$*.class')
+    include('**/*.class')
+    group(build)
 }
